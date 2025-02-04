@@ -1,0 +1,88 @@
+#include <Adafruit_GFX.h>    
+#include <Adafruit_ST7735.h> 
+#include <SPI.h>
+
+#define button 22
+#define TFT_CS    16
+#define TFT_RES   5 
+#define TFT_RS    17
+#define TFT_SCLK 18 
+#define TFT_MOSI 23 
+#define button_shoot 4
+#define button_reload 21
+#define laser 22
+
+//STAT GUN
+int bullet = 30;
+const int bullet_full = 30;
+bool reloader = false;
+//setup TFT
+Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_RS, TFT_MOSI, TFT_SCLK, TFT_RES);
+//TFT DISPLAY
+void display(){ 
+  // tft.fillScreen(ST7735_BLACK);
+  tft.fillRect(0,60 , 40, 25, ST7735_BLACK);
+  tft.setTextColor(ST7735_WHITE);
+  tft.setTextSize(3);
+  tft.setCursor(0, 30);
+  tft.println("  AMMO   ");
+  tft.setTextSize(3);
+  //solve bug number
+  if(bullet < 10) tft.setCursor(20,60);
+  else tft.setCursor(0,60);
+  tft.print(bullet);
+  tft.print(" / ");
+  tft.println(bullet_full); 
+}
+//shooting bullet
+void bullet_state(){
+  if(digitalRead(button_shoot) == LOW && bullet > 0){
+          digitalWrite(laser,HIGH);
+          delay(100);
+          digitalWrite(laser,LOW);
+          bullet--;
+          display();
+  }else if(digitalRead(button_shoot) == LOW && bullet <= 0){
+          tft.fillScreen(ST7735_BLACK); 
+          tft.setTextSize(1.5);
+          tft.setCursor(0,40);
+          tft.println(" PLEASE PRESS BUTTON RELOAD "); 
+          bullet = 0;
+  }else{
+         digitalWrite(laser,LOW);
+  }
+  //reload button
+  if(reloader){
+      tft.fillScreen(ST7735_BLACK); 
+      bullet = 30;
+      tft.setTextSize(2);
+      tft.setCursor(0,60);
+      tft.print("NOW RELOAD");
+      delay(1000);
+      reloader = false;
+      tft.fillScreen(ST7735_BLACK); 
+      display();
+  } 
+}
+void IRAM_ATTR reload_ISR(){
+   reloader = true;
+}
+void setup() {
+  // ตั้งค่าขาอินพุตและเอาต์พุต
+  pinMode(button_shoot, INPUT);
+  pinMode(button_reload, INPUT);
+  pinMode(laser, OUTPUT);
+
+  // เริ่มต้นจอ TFT
+  tft.initR(INITR_BLACKTAB); 
+  tft.fillScreen(ST7735_BLACK); 
+  // แสดงข้อมูลกระสุนด้านล่าง
+  display();
+
+  // ตั้งค่าขาอินเทอร์รัพท์
+  attachInterrupt(digitalPinToInterrupt(button_reload), reload_ISR, FALLING);
+}
+
+void loop() {
+  bullet_state();
+}
