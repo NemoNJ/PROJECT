@@ -1,17 +1,18 @@
+#include <Arduino.h>
 #include <Adafruit_GFX.h>    
 #include <Adafruit_ST7735.h> 
 #include <SPI.h>
 
-#define button 22
 #define TFT_CS    16
 #define TFT_RES   5 
 #define TFT_RS    17
 #define TFT_SCLK 18 
 #define TFT_MOSI 23 
-#define button_shoot 35
-#define button_reload 34
-#define laser 22
-#define ISD_Buzzer 19
+#define button_shoot 13
+#define button_reload 12
+#define laser 15
+#define buzzer 2
+
 
 //STAT GUN
 int bullet = 30;
@@ -134,6 +135,7 @@ void display(){
   tft.println(">>> SHOOTING MODE <<<");
 
   //clear bullet
+  if(bullet == 9) tft.fillRect(0,210 , 40, 25, ST7735_BLACK); 
   tft.fillRect(0,60 , 40, 25, ST7735_BLACK);
 
   tft.setTextColor(ST7735_WHITE);
@@ -155,11 +157,12 @@ void display(){
 //shooting bullet
 void bullet_state(){
   if(digitalRead(button_shoot) == LOW && bullet > 0){
-          digitalWrite(ISD_Buzzer,HIGH);
+          //buzzer here
+          digitalWrite(buzzer,HIGH);
           digitalWrite(laser,HIGH);
-          delay(80);
-          digitalWrite(ISD_Buzzer,LOW);
-          digitalWrite(laser,LOW);
+          delay(90);
+          digitalWrite(buzzer,LOW);
+          digitalWrite(laser,HIGH);
           bullet--;
           display();
   }else if(digitalRead(button_shoot) == LOW && bullet <= 0){
@@ -168,7 +171,7 @@ void bullet_state(){
           tft.setTextColor(ST7735_RED);
           tft.setTextSize(2);
           tft.setCursor(0,45);
-          tft.println(" PULL BOLK"); 
+          tft.println(" PULL BOLT"); 
           tft.setTextColor(ST7735_BLUE);
           tft.println(""); 
           tft.println(" TO RELOAD"); 
@@ -192,7 +195,7 @@ void bullet_state(){
       reloader = false;
       for(int i = 1;i < 7;i++){
         tft.print(".");
-        delay(150);
+        delay(100);
       }
       tft.fillScreen(ST7735_BLACK); 
       display();
@@ -208,7 +211,7 @@ void setup() {
   pinMode(button_shoot, INPUT);
   pinMode(button_reload, INPUT);
   pinMode(laser, OUTPUT);
-  pinMode(ISD_Buzzer,OUTPUT);
+  pinMode(buzzer,OUTPUT);
 
   // เริ่มต้นจอ TFT
   tft.initR(INITR_BLACKTAB); 
