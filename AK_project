@@ -8,10 +8,11 @@
 #define TFT_RS    17
 #define TFT_SCLK 18 
 #define TFT_MOSI 23 
-#define button_shoot 13
-#define button_reload 12
-#define laser 15
-#define buzzer 2
+#define button_shoot 27
+#define button_reload 26
+#define laser 21
+#define buzzer 22
+#define isd_1820 15
 
 
 //STAT GUN
@@ -158,15 +159,17 @@ void display(){
 void bullet_state(){
   if(digitalRead(button_shoot) == LOW && bullet > 0){
           //buzzer here
-          digitalWrite(buzzer,HIGH);
-          digitalWrite(laser,HIGH);
-          delay(90);
           digitalWrite(buzzer,LOW);
           digitalWrite(laser,HIGH);
+          delay(90);
+          digitalWrite(buzzer,HIGH);
+          digitalWrite(laser,LOW);
           bullet--;
           display();
   }else if(digitalRead(button_shoot) == LOW && bullet <= 0){
           //clear bullet
+          digitalWrite(isd_1820,HIGH);
+          digitalWrite(isd_1820,LOW);
           tft.fillRect(0,30 , 240, 70, ST7735_WHITE);
           tft.setTextColor(ST7735_RED);
           tft.setTextSize(2);
@@ -212,6 +215,8 @@ void setup() {
   pinMode(button_reload, INPUT);
   pinMode(laser, OUTPUT);
   pinMode(buzzer,OUTPUT);
+  pinMode(isd_1820,OUTPUT);
+   digitalWrite(buzzer,HIGH);
 
   // เริ่มต้นจอ TFT
   tft.initR(INITR_BLACKTAB); 
