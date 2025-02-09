@@ -1,0 +1,44 @@
+#define IR1 35
+#define IR2 34
+#define button_TEST 23
+
+volatile long pulseCount = 0;  // นับจำนวนพัลส์ที่เกิดขึ้น
+const double width_Black_White = 2.0;  // ความกว้างของแต่ละพัลส์ 1 block = 
+volatile bool lastIR1State = LOW;  // เก็บสถานะก่อนหน้าของ IR1
+
+void IRAM_ATTR calDistance_ISR() {
+    bool ir1_state = digitalRead(IR1);
+    bool ir2_state = digitalRead(IR2);
+
+    if (ir1_state != lastIR1State) {  // ตรวจจับการเปลี่ยนสถานะ (Edge Detection)
+        if (ir1_state == HIGH) {  // ขึ้นขอบ (RISING EDGE)
+            pulseCount += (ir2_state) ? -1 : 1;  // ดูทิศทางจาก IR2
+        } else {  // ลงขอบ (FALLING EDGE)
+            pulseCount += (ir2_state) ? 1 : -1;
+        }
+        lastIR1State = ir1_state;  // อัปเดตสถานะล่าสุด
+    }
+}
+
+void clear_distance() {
+    if (digitalRead(button_TEST) == LOW) {
+        pulseCount = 0;  // รีเซ็ตค่าพัลส์
+    }
+}
+
+void setup() {
+    Serial.begin(9600);  // ใช้ความเร็วสูงขึ้นเพื่อลดดีเลย์จาก Serial
+    pinMode(IR1, INPUT);
+    pinMode(IR2, INPUT);
+    pinMode(button_TEST, INPUT_PULLUP);  // ป้องกันค่าลอย
+
+    attachInterrupt(digitalPinToInterrupt(IR1), calDistance_ISR, CHANGE);  // ใช้ Interrupt บน IR1
+}
+
+void loop() {
+    clear_distance();
+    double distance = pulseCount * width_Black_White;  // คำนวณระยะทาง
+    Serial.print("Distance: ");
+    Serial.println(distance);
+    delay(100);  // หน่วงเวลาให้ Serial อ่านง่ายขึ้น
+}
