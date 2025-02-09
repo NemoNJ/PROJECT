@@ -1,0 +1,39 @@
+#define DC_motor1 22
+#define DC_motor2 23
+#define button_start 21
+#define button_end   19
+bool DC_STATE = true;
+int Power[] = {0, 150, 250};
+
+void ICACHE_RAM_ATTR DC_start_ISR() {
+    DC_STATE = true;
+}
+
+void ICACHE_RAM_ATTR DC_end_ISR() {
+    DC_STATE = false;
+}
+
+void DC_control() {
+    if (DC_STATE) {
+        analogWrite(DC_motor1, Power[1]);
+        delay(1);
+        analogWrite(DC_motor2, Power[0]);
+        delay(1);
+    } else{
+        analogWrite(DC_motor1, Power[0]);
+        delay(1);
+        analogWrite(DC_motor2, Power[1]);
+        delay(1);
+    }
+}
+
+void setup() {
+    pinMode(DC_motor1, OUTPUT);
+    pinMode(DC_motor2, OUTPUT);
+    attachInterrupt(digitalPinToInterrupt(button_start), DC_start_ISR, FALLING);
+    attachInterrupt(digitalPinToInterrupt(button_end), DC_end_ISR, FALLING);
+}
+
+void loop() {
+    DC_control();
+}
