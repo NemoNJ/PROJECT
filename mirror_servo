@@ -1,0 +1,48 @@
+#include <ESP32Servo.h>
+
+Servo mirror_control;
+// Recommended PWM GPIO pins on the ESP32 include 2,4,12-19,21-23,25-27,32-33
+#define servoPin 23
+double angle = 0.0;
+double distance = 0.0;
+//double last_distance = 0.0;
+double last_angle = 0.0;
+
+#define button_1  22
+#define button_2  1
+
+void setup() {
+  pinMode(button_1,INPUT);
+  pinMode(button_2,INPUT);
+  //servo
+  Serial.begin(9600);
+  mirror_control.attach(servoPin);  // เชื่อมต่อ Servo กับพิน
+}
+
+void loop() {
+if(digitalRead(button_1) == LOW){
+    distance += 30;
+
+}
+if(digitalRead(button_2) == LOW){
+    distance -= 30;
+}
+angle = distance;
+if(angle > last_angle){
+    for(int change_angle = last_angle;change_angle <= angle;change_angle += 1){
+        mirror_control.write(change_angle); 
+        delay(5); 
+        if(angle > 180) angle = 180;        
+    }
+    last_angle = angle;
+}
+if(angle < last_angle){
+    for(int change_angle = last_angle;change_angle >= angle;change_angle -= 1){
+        mirror_control.write(change_angle); 
+        delay(5); 
+        if(angle < 0) angle = 0;        
+    }
+    last_angle = angle;
+}
+
+}
