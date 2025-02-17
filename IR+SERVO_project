@@ -1,0 +1,90 @@
+//-------------Math Setup-------------
+#include <math.h>
+#include <stdio.h>
+#define button_TEST 23
+
+//-------------IR SENSOR Setup--------------
+#define IR1 27
+#define IR2 14
+
+volatile long pulseCount = 0;  // นับจำนวนพัลส์ที่เกิดขึ้น
+const double width_Black_White = 2.0;  // ความกว้างของแต่ละพัลส์ 1 block = 
+volatile bool lastIR1State = LOW;  // เก็บสถานะก่อนหน้าของ IR1
+
+//-------------SERVO Setup--------------
+#include <ESP32Servo.h>
+Servo mirror_control;
+// Recommended PWM GPIO pins on the ESP32 include 2,4,12-19,21-23,25-27,32-33
+#define servoPin 13
+double angle = 0.0;
+double distance = 0.0;
+//double last_distance = 0.0;
+double last_angle = 0.0;
+double distance_now = 0.0;
+
+
+void IRAM_ATTR calDistance_ISR() {
+    bool ir1_state = digitalRead(IR1);
+    bool ir2_state = digitalRead(IR2);
+
+    if (ir1_state != lastIR1State) {  // ตรวจจับการเปลี่ยนสถานะ (Edge Detection)
+        if (ir1_state == HIGH) {  // ขึ้นขอบ (RISING EDGE)
+            pulseCount += (ir2_state) ? -1 : 1;  // ดูทิศทางจาก IR2
+        } else {  // ลงขอบ (FALLING EDGE)
+            pulseCount += (ir2_state) ? 1 : -1;
+        }
+        lastIR1State = ir1_state;  // อัปเดตสถานะล่าสุด
+    }
+}
+void clear_distance() {
+    if (digitalRead(button_TEST) == LOW) {
+        pulseCount = 0;  // รีเซ็ตค่าพัลส์
+    }
+}
+
+//test funtion()
+void printcheck_angle_distance(){
+    Serial.print("Distance: ");
+     Serial.println(distance_now);
+    //  Serial.print("Angle: ");
+    //  Serial.println(angle);
+     delay(100);  // หน่วงเวลาให้ Serial อ่านง่ายขึ้น
+}
+void ServoDC_control(){
+  //DC_control();
+     clear_distance();
+     double distance = pulseCount * width_Black_White;  // คำนวณระยะทาง
+     angle = (M_PI - atan(10/distance))*(180/M_PI) - 90;
+     distance_now = distance;
+//control servo by distance
+if(angle > last_angle){
+    for(int change_angle = last_angle;change_angle <= angle;change_angle += 1){
+        mirror_control.write(change_angle); 
+        delay(3); 
+        if(angle > 180) angle = 180;        
+    }
+    last_angle = angle;
+}
+if(angle < last_angle){
+    for(int change_angle = last_angle;change_angle >= angle;change_angle -= 1){
+        mirror_control.write(change_angle); 
+        delay(3); 
+        if(angle < 0) angle = 0;        
+    }
+    last_angle = angle;
+}
+}
+
+void setup() {
+    Serial.begin(9600);  // ใช้ความเร็วสูงขึ้นเพื่อลดดีเลย์จาก Serial
+    pinMode(IR1, INPUT);
+    pinMode(IR2, INPUT);
+    pinMode(button_TEST, INPUT_PULLUP);  // ป้องกันค่าลอย
+    mirror_control.attach(servoPin);  // เชื่อมต่อ Servo กับพิน
+    attachInterrupt(digitalPinToInterrupt(IR1), calDistance_ISR, CHANGE);  // ใช้ Interrupt บน IR1
+}
+
+void loop() {
+    ServoDC_control();
+    printcheck_angle_distance();
+}
