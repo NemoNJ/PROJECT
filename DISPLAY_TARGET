@@ -660,7 +660,6 @@ void display_target_mode2() {
     round_draw = false;
   }
 }
-
 // เมื่อถูกโจมตี
 void IRAM_ATTR beAttacked_ISR() {
   Health--;
@@ -706,12 +705,20 @@ void target_died() {
   // วาดหน้าจอใหม่
   tft_1.fillScreen(ST7735_BLACK);
 }
-
+  //สมมติ---------
+   volatile double mirror_angle = 30.0;
+   volatile double distance_start_end = 24.0;
+   volatile double distance_target_mirror = 10.0;
+   volatile bool clear_status = false; 
+   volatile int score = 0;
+   volatile int time_game = 120;
+  //--------------
 // เปลี่ยนสีเป้าหมายเมื่อมีการกดปุ่ม
 void IRAM_ATTR change_color_target_ISR() {
   detect_laser = !detect_laser; // Toggle
   detect_displayed_green = false;
   detect_displayed_red = false;
+  clear_status = true;
 }
 
 // ตั้งค่าเริ่มต้น
@@ -735,9 +742,117 @@ void setup() {
   
 }
 
+void display_angle_distance_mode1(){
+     if(clear_status == 1){
+         //clear-----------
+       tft_2.fillRect(20,25 , 180, 22, ST7735_BLACK);
+       tft_2.fillRect(20,75 , 180, 22, ST7735_BLACK);
+       tft_2.fillRect(20,125 , 180, 22, ST7735_BLACK);
+       clear_status = false;
+        mirror_angle -= 0.52;
+        distance_start_end -= 1;
+        distance_target_mirror -= 0.34;
+    }
+  //angle 
+    tft_2.setTextColor(ST7735_RED);
+    tft_2.setTextSize(1);
+    tft_2.setCursor(0,0);
+    tft_2.println("---------------------");
+    tft_2.setCursor(25,10);
+    tft_2.setTextColor(ST7735_GREEN);
+    tft_2.println("MIRROR ANGLE");
+    tft_2.setTextColor(ST7735_WHITE);
+    tft_2.setTextSize(3);
+    tft_2.setCursor(22,25);
+    tft_2.println(mirror_angle);  
+    //distance origin
+    tft_2.setTextColor(ST7735_RED);
+    tft_2.setTextSize(1);
+    tft_2.setCursor(0,50);
+    tft_2.println("---------------------");
+    tft_2.setCursor(0,60);
+    tft_2.setTextColor(ST7735_CYAN);
+    tft_2.println("DISTANCE START TARGET");
+    tft_2.setTextColor(ST7735_WHITE);
+    tft_2.setTextSize(3);
+    tft_2.setCursor(22,75);
+    tft_2.println(distance_start_end);
+    //distance mirror
+    tft_2.setTextColor(ST7735_RED);
+    tft_2.setTextSize(1);
+    tft_2.setCursor(0,100);
+    tft_2.println("---------------------");
+    tft_2.setCursor(0,110);
+    tft_2.setTextColor(ST7735_YELLOW);
+    tft_2.println("DISTANCE SERVO TARGET");
+    tft_2.setTextColor(ST7735_WHITE);
+    tft_2.setTextSize(3);
+    tft_2.setCursor(22,125);
+    tft_2.println(distance_target_mirror);
+    tft_2.setTextColor(ST7735_RED);
+    tft_2.setTextSize(1);
+    tft_2.setCursor(0,150);
+    tft_2.println("---------------------");
+}
+
+volatile int updatetime = 0;
+volatile int last_updatetime = 1000;
+void display_Game_mode2(){
+     if(clear_status == 1){
+         //clear-----------
+      tft_2.fillRect(25,110, 240,40, ST7735_BLACK);
+       clear_status = false;
+        score += 1;
+    }
+    //update timer
+     updatetime =  millis();
+       if(updatetime - last_updatetime >= 1000){
+         tft_2.fillRect(25,35 , 240,40, ST7735_BLACK);
+          time_game -= 1;
+          last_updatetime = millis();
+          if(time_game == 0 ) time_game = 120;//ค่อยใส่เงื่อนไขจบเกม
+          //if(time_game == 0 && ชนะ ) you win;//ค่อยใส่เงื่อนไขจบเกม
+          //if(time_game == 0 && แพ้ ) you lose;//ค่อยใส่เงื่อนไขจบเกม
+       } 
+  //angle 
+    tft_2.setTextColor(ST7735_RED);
+    tft_2.setTextSize(1);
+    tft_2.setCursor(0,0);
+    tft_2.println("---------------------");
+    tft_2.setTextSize(2);
+    tft_2.setCursor(35,15);
+    tft_2.setTextColor(ST7735_YELLOW);
+    tft_2.println("TIMER");
+    tft_2.setTextSize(5);
+    tft_2.setCursor(25,35);
+    tft_2.setTextColor(ST7735_WHITE);
+    tft_2.println(time_game);
+
+    tft_2.setTextColor(ST7735_RED);
+    tft_2.setTextSize(1);
+    tft_2.setCursor(0,80);
+    tft_2.println("---------------------");
+    
+    tft_2.setTextSize(2);
+    tft_2.setCursor(5,90);
+    tft_2.setTextColor(ST7735_GREEN);
+    tft_2.println("YOUR SCORE");
+    tft_2.setTextSize(5);
+    tft_2.setCursor(25,110);
+    tft_2.setTextColor(ST7735_WHITE);
+    tft_2.println(score);
+
+    tft_2.setTextColor(ST7735_RED);
+    tft_2.setTextSize(1);
+    tft_2.setCursor(0,150);
+    tft_2.println("---------------------");
+}
 // ลูปหลัก
 void loop() {
   display_target_mode1();
+  // display_angle_distance_mode1();
+  display_Game_mode2();
+  Serial.println(clear_status);
   // if (Health > 0) {
   //   display_target_mode2(); // อัปเดตค่า Health บนจอแบบเรียลไทม์
   // }else{
