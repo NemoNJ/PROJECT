@@ -824,7 +824,9 @@ void display_Game_mode2(){
     tft_2.setTextColor(ST7735_YELLOW);
     tft_2.println("TIMER");
     tft_2.setTextSize(5);
-    tft_2.setCursor(25,35);
+    if(time_game >= 100) tft_2.setCursor(25,35);
+    else if(time_game >= 10) tft_2.setCursor(38,35);
+    else if(time_game < 10) tft_2.setCursor(55,35);
     tft_2.setTextColor(ST7735_WHITE);
     tft_2.println(time_game);
 
@@ -838,7 +840,9 @@ void display_Game_mode2(){
     tft_2.setTextColor(ST7735_GREEN);
     tft_2.println("YOUR SCORE");
     tft_2.setTextSize(5);
-    tft_2.setCursor(25,110);
+    if(score >= 100) tft_2.setCursor(25,110);
+    else if(score >= 10) tft_2.setCursor(38,110);
+    else if(score < 10) tft_2.setCursor(55,110);
     tft_2.setTextColor(ST7735_WHITE);
     tft_2.println(score);
 
