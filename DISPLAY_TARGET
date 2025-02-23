@@ -727,6 +727,9 @@ void display_target_mode2() {
 }
 // เมื่อถูกโจมตี
 void IRAM_ATTR beAttacked_ISR() {
+  detect_laser = !detect_laser; // Toggle
+  detect_displayed_green = false;
+  detect_displayed_red = false;
   clear_status = true;
 }
 
@@ -778,10 +781,11 @@ void target_died() {
   tft_1.fillScreen(ST7735_BLACK);
 }
 // เปลี่ยนสีเป้าหมายเมื่อมีการกดปุ่ม
-void IRAM_ATTR change_color_target_ISR() {
-  detect_laser = !detect_laser; // Toggle
-  detect_displayed_green = false;
-  detect_displayed_red = false;
+bool mode = 1;
+bool last_mode = 1;
+void IRAM_ATTR change_target_ISR() {
+// ลูปหลัก
+  mode = !mode;
 }
 
 // ตั้งค่าเริ่มต้น
@@ -800,7 +804,7 @@ void setup() {
   tft_1.drawRGBBitmap(3, 0, image_data_target, 240, 320);
   
   // ตั้งค่า Interrupt
-  attachInterrupt(digitalPinToInterrupt(button), change_color_target_ISR, FALLING);
+  attachInterrupt(digitalPinToInterrupt(button), change_target_ISR, FALLING);
   attachInterrupt(digitalPinToInterrupt(button_attack), beAttacked_ISR, FALLING);
   
 }
@@ -975,9 +979,14 @@ void display_Game_mode2(){
     tft_2.setCursor(0,150);
     tft_2.println("---------------------");
 }
-// ลูปหลัก
-int mode = 2;
 void loop() {
+  if(mode != last_mode){
+  tft_2.fillScreen(ST7735_BLACK);
+  tft_1.fillRect(0, 110, 240, 70, ST7735_BLACK);
+  last_mode = mode; 
+     if(mode == 1) display_target_mode1();
+     if(mode == 0) tft_1.drawRGBBitmap(0, 110, image_data_target_HP, 240, 70);
+  }
   if(mode == 1){
       display_target_mode1();
       display_angle_distance_mode1();
