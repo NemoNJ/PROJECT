@@ -1290,8 +1290,8 @@ void loop() {
           tft_1.drawRGBBitmap(3, 0, image_data_target, 240, 320);
           i++;
       }
-    display();
     if(analogRead(LDR) > 1500 )LDR_beAttacked();
+    display();
        if(mode == 1){
              digitalWrite(laser,HIGH);
              ServoDC_control();
@@ -1302,8 +1302,8 @@ void loop() {
        }
   }else{
   digitalWrite(laser,LOW);
-  digitalWrite(DC_motor1,LOW);
-  digitalWrite(DC_motor2,LOW);
+  analogWrite(DC_motor1,0);
+  analogWrite(DC_motor2,0);
   tft_1.fillScreen(ST7735_BLACK);
   tft_2.fillScreen(ST7735_BLACK);
   }
