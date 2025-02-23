@@ -69,7 +69,6 @@ volatile int randNum = 1;
 //-------------Math Setup-------------
 #include <math.h>
 #include <stdio.h>
-#define button_TEST 23
 
 //-------------IR SENSOR Setup--------------
 #define IR1 27
@@ -712,7 +711,7 @@ const uint16_t image_data_red[240 * 50] = {
 //---------------------------------------------------------------------------------------------------------------------------
 
 //-------------------------------------INTTERUPT FUNCTION -------------------------------------------------------------------
-void IRAM_ATTR openClose_ISR(){
+void IRAM_ATTR Reset_ISR(){
     if(digitalRead(switch_openclose) == LOW) open_STATE = true;
     else open_STATE = false;
 }
@@ -740,7 +739,8 @@ void IRAM_ATTR calDistance_ISR() {
 bool last_mode = 1;
 void IRAM_ATTR MODE_ISR() {
 // ลูปหลัก
-  mode = !mode;
+   if(digitalRead(switch_mode) == LOW) mode = 1;
+   else mode = 0;
 }
 //---------------------------------------------------------------------------------------------------------------------------
 
@@ -884,11 +884,6 @@ void DC_control() {
     }
 }
 //------------------IR_SERVO FUNCTION ---------------------
-void clear_distance() {
-    if (digitalRead(button_TEST) == LOW) {
-        pulseCount = 0;  // รีเซ็ตค่าพัลส์
-    }
-}
 
 //test funtion()
 void printcheck_angle_distance(){
@@ -900,7 +895,6 @@ void printcheck_angle_distance(){
 }
 void ServoDC_control(){
      DC_control();
-     clear_distance();
      double distance = pulseCount * width_Black_White;  // คำนวณระยะทาง
      angle = (M_PI - atan(10/distance))*(180/M_PI) - 90;
      distance_now = distance;
@@ -927,6 +921,7 @@ if(angle < last_angle){
 // แสดงสถานะ "DETECT" และ "NOT DETECT"
 void display_target_mode1() { 
   if (detect_laser && !detect_displayed_green) {
+    Serial.println("Mode1 Enter");
     tft_1.fillRect(0, 110, 240, 70, ST7735_GREEN);
     tft_1.setTextColor(ST7735_BLACK);
     tft_1.setTextSize(2);
@@ -1241,32 +1236,40 @@ void display(){
 
 // เมื่อถูกโจมตี
 void LDR_beAttacked() {
-  if(LDR > 2000){
       detect_laser = !detect_laser; // Toggle
       detect_displayed_green = false;
       detect_displayed_red = false;
       clear_status = true;
-  }
 }
 //---------------------------------------------------------------------------------------------------------------------------
 
 void setup() {
+   // เริ่มต้น TFT
+  tft_1.initR(INITR_BLACKTAB);
+  tft_2.initR(INITR_BLACKTAB);
+  tft_1.fillScreen(ST7735_BLACK);
+  tft_2.fillScreen(ST7735_BLACK);
+        //-------------TFT-------------
+    // วาดเป้าหมายเริ่มต้น
+    tft_1.drawRGBBitmap(3, 0, image_data_target, 240, 320);
+
+    // เซ็ตค่าเริ่มต้น
+    Health = Health_max[level - 1];
+    // วาดเป้าหมายเริ่มต้น
   Serial.begin(9600);
-  // put your setup code here, to run once:
+  // // put your setup code here, to run once:
   //-------------SWITCH-------------
   pinMode(switch_openclose, INPUT);
   pinMode(switch_mode, INPUT);
-  attachInterrupt(digitalPinToInterrupt(switch_openclose), openClose_ISR, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(switch_openclose), Reset_ISR, CHANGE);
   attachInterrupt(digitalPinToInterrupt(switch_mode), MODE_ISR, CHANGE);
-  while(!open_STATE);
   //-------------Laser & Buzzer-------
   pinMode(isd_1820, OUTPUT);
   pinMode(laser, OUTPUT);
   pinMode(LDR, INPUT);
-  //-------------IR SERVO-------------
+  // //-------------IR SERVO-------------
   pinMode(IR1, INPUT);
   pinMode(IR2, INPUT);
-  pinMode(button_TEST, INPUT_PULLUP);  // ป้องกันค่าลอย
   mirror_control.attach(servoPin);  // เชื่อมต่อ Servo กับพิน
   attachInterrupt(digitalPinToInterrupt(IR1), calDistance_ISR, CHANGE);  // ใช้ Interrupt บน IR1
 
@@ -1277,38 +1280,17 @@ void setup() {
     pinMode(button_end, INPUT_PULLUP);
     attachInterrupt(digitalPinToInterrupt(button_start), DC_start_ISR, FALLING);
     attachInterrupt(digitalPinToInterrupt(button_end), DC_end_ISR, FALLING);
-  //-------------TFT-------------
-  // เริ่มต้น TFT
-  tft_1.initR(INITR_BLACKTAB);
-  tft_2.initR(INITR_BLACKTAB);
-  tft_1.fillScreen(ST7735_BLACK);
-  tft_2.fillScreen(ST7735_BLACK);
-  
-  // กำหนดค่า Health เริ่มต้นจาก Level 1
-  Health = Health_max[level - 1];
-  
-  // วาดเป้าหมายเริ่มต้น
-  tft_1.drawRGBBitmap(3, 0, image_data_target, 240, 320);
 }
 
 void loop() {
-if(open_STATE == true){
-       LDR_beAttacked();
        display();
+    if(analogRead(LDR) > 1500 )LDR_beAttacked();
        if(mode == 1){
              digitalWrite(laser,HIGH);
              ServoDC_control();
        }else{
-             digitalWrite(laser,LOW);
+            //  digitalWrite(laser,LOW);
+            digitalWrite(laser,HIGH);
              DC_control();
        }
-}else{
-      digitalWrite(DC_motor1,LOW);
-      digitalWrite(DC_motor2,LOW);
-      digitalWrite(laser,LOW);
-      digitalWrite(isd_1820,LOW);
-      tft_1.fillScreen(ST7735_BLACK);
-      tft_2.fillScreen(ST7735_BLACK);
 }
-}
-
