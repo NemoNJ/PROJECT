@@ -1,7 +1,7 @@
 #define DC_motor1 25
 #define DC_motor2 26
-#define button_start 21
-#define button_end 19
+#define button_start 34
+#define button_end 35
 
 bool DC_STATE = true;
 int Power[] = {0, 80, 150,200,255};
