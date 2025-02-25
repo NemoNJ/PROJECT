@@ -38,6 +38,7 @@ volatile bool is_dead = false;  // ตัวแปรกัน loop ทำงา
 unsigned long died_time = 0;  // เก็บเวลาตาย
 volatile bool clear_status = false; 
 volatile bool clear_shoot = false;
+volatile bool clear_bug = false;
 volatile int score = 0;
 volatile int high_score = 0;
 volatile int last_score = 0;
@@ -715,6 +716,7 @@ const uint16_t image_data_red[240 * 50] = {
 
 //-------------------------------------INTTERUPT FUNCTION -------------------------------------------------------------------
 void IRAM_ATTR Reset_ISR(){
+  clear_bug = true;
   time_game = time_end;
   high_score = 0;
   score = 0;
@@ -1373,6 +1375,12 @@ void setup() {
 }
 bool draw_screen = true;
 void loop() {
+check_mode();
+if(clear_bug == true){
+  tft_2.fillRect(25,110 , 240,40, ST7735_BLACK);
+  tft_2.fillRect(25,35 , 240,40, ST7735_BLACK);
+clear_bug = false;
+}
 Serial.println(analogRead(LDR));
 //ตรวจสอบ mode ก่อนเริ่มเกม
   if(open_STATE == true || digitalRead(switch_openclose) == LOW){
