@@ -4,7 +4,7 @@ Servo myservo;
 int servoPin = 13;
 double last_pos = 180;
 double pos = 180;
-#define servo_input 12
+#define servo_input 23
 
 void setup() {
   myservo.attach(servoPin);
