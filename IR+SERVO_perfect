@@ -15,7 +15,7 @@ volatile bool lastIR1State = LOW;  // เก็บสถานะก่อนห
 #include <ESP32Servo.h>
 Servo mirror_control;
 // Recommended PWM GPIO pins on the ESP32 include 2,4,12-19,21-23,25-27,32-33
-#define servoPin 13
+#define servoPin 23
 double angle = 0.0;
 double distance = 0.0;
 //double last_distance = 0.0;
